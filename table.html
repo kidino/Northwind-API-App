@@ -1,0 +1,84 @@
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="css/bootstrap.css">
+		<title>Northwind Customers</title>
+	</head>
+	<body>
+		<div class="container">
+			<div class="row">
+				<div class="col-md-12">
+					<p>&nbsp;</p>
+					<h2>Northwind Customer Table</h2>
+					<div id="fusio-table-wrapper">
+					</div>
+					<p>&nbsp;</p>
+				</div>
+			</div>
+		</div>
+		<script src="js/jquery.js"></script>
+		<script src="fusioTable/fusioTable.js"></script>
+		<script>
+
+			$(document).ready(function(){
+			
+				$('#fusio-table-wrapper').fusioTable({
+					url : 'http://api.mylocal.test/northwind/customer',
+					/*
+					filterBy : 'customerid',
+					filterOp : 'startsWith',
+					filterValue : 'M',
+					*/
+					columns : [ // default [] -- empty array, will return all columns
+						{ label : 'Customer ID', name : 'customerid', sortable : true },
+						{ label : 'Company', name : 'companyname' },
+						{ label : 'Contact', name : 'contactname', sortable : true },
+						{ label : 'Title', name : 'contacttitle' },
+						{ label : 'Action', 
+							custom: function(cols) { 
+								if (cols == null) return; 
+								// Some how browser will run this the first time when
+								// API not loaded yet and cols is null. Will break with
+								// JS error. This prevents that. cols will return the 
+								// entry columns from API call.
+								
+								return "<button data-id='"+cols.customerid+"' class='btn btn-sm btn-warning edit-customer'>EDIT</button> "
+									+ "<button data-id='"+cols.customerid+"' class='btn btn-sm btn-danger delete-customer'>DELETE</button>";
+							} 
+						}
+					]
+				});
+				
+				$('#fusio-table-wrapper').on('click','.edit-customer', function(){
+					var customerid = $(this).attr('data-id');
+					window.location.href = 'edit_customer.php?id='+customerid;
+				});
+			
+				$('#fusio-table-wrapper').on('click','.delete-customer', function(){
+					var customerid = $(this).attr('data-id');
+					
+					var thistr = $(this).closest('tr');
+					
+					$.ajax({
+						url : 'http://api.mylocal.test/northwind/customer/'+customerid,
+						method : 'DELETE',
+						headers : {
+							"Content-Type": 'application/json',
+							'Authorization' : 'Bearer '+localStorage.getItem('token')
+						}
+					}).done(function(data){
+						console.log('OK');
+						
+						thistr.animate({ opacity: 0 }, 500, function() { $(this).remove(); });
+						
+
+					}).fail(function( jqXHR, textStatus, errorThrown ) { 
+						
+					});
+					
+				});
+			
+			});
+			
+		</script>
+	</body>
+</html>
